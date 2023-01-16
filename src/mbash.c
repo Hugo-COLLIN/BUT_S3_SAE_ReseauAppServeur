@@ -21,7 +21,9 @@ void processing();
 void checkExit();
 void interpreter();
 void identifyTokens(char *arg_list[], char *p, int count);
-void execute();
+void executeCmd();
+int nbArguments();
+void freeTokens(char *arg_list[], char *p);
 
 
 int main(int argc, char** argv) {
@@ -35,7 +37,6 @@ void run()
     welcome();
 
     while (1) {
-        capture();
         processing();
     }
 }
@@ -44,25 +45,35 @@ void run()
 void welcome()
 {
     printf("-----------------\n");
-    printf("Welcome to mbash!\n\n");
-    //printf("Type 'exit' to exit.\n");
+    printf("Welcome to mbash!\n");
+    printf("Hugo COLLIN - 16/01/2023\n\n");
+    printf("Type 'exit' to exit mBash.\n");
     printf("-----------------\n");
+}
+
+void processing() {
+    capture();
+    interpreter();
 }
 
 void capture()
 {
-    printf("mbash> ");
+    printf("mbash-%i> ", getpid());
     fgets(cmd, MAXLI, stdin);
     cmd[strlen(cmd) - 1] = '\0';
 }
 
-
-void processing() {
+void interpreter()
+{
     checkExit();
-    printf("<< %s\n", cmd);
-    //system(cmd);
-    interpreter();
 
+    int count = nbArguments();
+    char *arg_list[count+2]; //array of arguments
+    char *p = strdup(cmd); //duplicates cmd string
+
+    identifyTokens(arg_list, p, count);
+    executeCmd(arg_list);
+    freeTokens(arg_list, p);
 }
 
 void checkExit() {
@@ -71,32 +82,16 @@ void checkExit() {
     }
 }
 
-void interpreter()
+int nbArguments()
 {
-    //Analyze the command
     int count = 0; //number of arguments
     int loop;
     for (loop = 0 ; loop < strlen(cmd) ; ++ loop)
     {
         if (cmd[loop] == ' ') ++ count; //counting the number of spaces
     }
-
-    char *arg_list[count+2]; //array of arguments
-    char *p = strdup(cmd); //duplicates cmd string
-
-    identifyTokens(arg_list, p, count);
-
-    execute(arg_list);
-
-    int increment=0;
-    while (arg_list[increment] != NULL)
-    {
-        free(arg_list[increment]);
-        increment ++;
-    }
-    free(p);
+    return count;
 }
-
 
 void identifyTokens(char *arg_list[], char *p, int count)
 {
@@ -112,7 +107,7 @@ void identifyTokens(char *arg_list[], char *p, int count)
     arg_list[increment] = NULL;
 }
 
-void execute(char *arg_list[])
+void executeCmd(char *arg_list[])
 {
     pid_t process = fork();
     if (process == 0) //parent process
@@ -125,4 +120,15 @@ void execute(char *arg_list[])
     {
         wait(&process);
     }
+}
+
+void freeTokens(char *arg_list[], char *p)
+{
+    int increment=0;
+    while (arg_list[increment] != NULL)
+    {
+        free(arg_list[increment]);
+        increment ++;
+    }
+    free(p);
 }
