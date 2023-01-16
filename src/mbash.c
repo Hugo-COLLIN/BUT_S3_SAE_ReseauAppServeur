@@ -16,6 +16,7 @@ void run();
 void welcome();
 void input();
 void output();
+void checkExit();
 
 
 int main(int argc, char** argv) {
@@ -52,7 +53,14 @@ void input()
 
 
 void output() {
-  printf("<< %s\n", cmd);
-  system(cmd);
+    checkExit();
+    printf("<< %s\n", cmd);
+    system(cmd);
 
+}
+
+void checkExit() {
+    if (strcmp(cmd, "exit") == 0) {
+        exit(EXIT_SUCCESS);
+    }
 }
