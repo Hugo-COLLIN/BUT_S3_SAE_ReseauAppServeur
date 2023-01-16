@@ -14,6 +14,7 @@ DS_store
 
 # Compiled class file
 *.class
+*.exe
 
 # Log file
 *.log
