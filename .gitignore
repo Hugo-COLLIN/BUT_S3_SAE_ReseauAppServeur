@@ -8,6 +8,11 @@ out
 # Ini files
 *.ini
 
+# No-extension files
+*
+!*/
+!*.*
+
 #Mac
 Thumbs.db
 DS_store
