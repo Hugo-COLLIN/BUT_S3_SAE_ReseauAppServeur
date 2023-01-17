@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <glob.h>
 
 #define MAXLI 2048
 
@@ -17,13 +18,13 @@ void mbash();
 void run();
 void welcome();
 void capture();
-void processing();
+void prompt();
 void checkExit();
 void interpreter();
-void identifyTokens(char *arg_list[], char *p, int count);
+void identifyTokens(char *arg_list[], char *c, int count);
 void executeCmd();
 int nbArguments();
-void freeTokens(char *arg_list[], char *p);
+void freeTokens(char *arg_list[], char *c);
 
 
 int main(int argc, char** argv) {
@@ -37,28 +38,28 @@ void run()
     welcome();
 
     while (1) {
-        processing();
+        prompt();
     }
 }
 
 
 void welcome()
 {
-    printf("-----------------\n");
-    printf("Welcome to mbash!\n");
+    printf("\n-----------------\n");
+    printf("Welcome to mBash!\n");
     printf("Hugo COLLIN - 16/01/2023\n\n");
     printf("Type 'exit' to exit mBash.\n");
     printf("-----------------\n");
 }
 
-void processing() {
+void prompt() {
     capture();
     interpreter();
 }
 
 void capture()
 {
-    printf("mbash-%i> ", getpid());
+    printf("\nmbash-%i> ", getpid());
     fgets(cmd, MAXLI, stdin);
     cmd[strlen(cmd) - 1] = '\0';
 }
@@ -69,11 +70,11 @@ void interpreter()
 
     int count = nbArguments();
     char *arg_list[count+2]; //array of arguments
-    char *p = strdup(cmd); //duplicates cmd string
+    char *c = strdup(cmd); //duplicates cmd string
 
-    identifyTokens(arg_list, p, count);
+    identifyTokens(arg_list, c, count);
     executeCmd(arg_list);
-    freeTokens(arg_list, p);
+    freeTokens(arg_list, c);
 }
 
 void checkExit() {
@@ -85,24 +86,45 @@ void checkExit() {
 int nbArguments()
 {
     int count = 0; //number of arguments
-    int loop;
-    for (loop = 0 ; loop < strlen(cmd) ; ++ loop)
+    for (int loop = 0 ; loop < strlen(cmd) ; ++ loop)
     {
         if (cmd[loop] == ' ') ++ count; //counting the number of spaces
     }
     return count;
 }
 
-void identifyTokens(char *arg_list[], char *p, int count)
+void identifyTokens(char *arg_list[], char *c, int count)
 {
-    char *tmp = strtok(p," "); //splits the duplicated string using spaces
+    char *tmp = strtok(c, " "); //splits the duplicated string using spaces
     int increment = 0; //index used to browse the arg_list array
 
     while (tmp != NULL)
     {
-        arg_list[increment] = strdup(tmp);
-        increment ++;
-        tmp = strtok(NULL," ");
+        char *c = strstr(tmp, "*");
+        if (c == NULL)
+        {
+            arg_list[increment] = strdup(tmp);
+            increment ++;
+        }
+        else
+        {
+            glob_t g;
+            int resGlob = glob(tmp, 0, NULL, &g);
+            if (resGlob == 0)
+            {
+                for (int loop = 0 ; loop < g.gl_pathc ; ++ loop)
+                {
+                    arg_list[increment] = strdup(g.gl_pathv[loop]);
+                    increment ++;
+                }
+            }
+            globfree(&g);
+        }
+        tmp = strtok(NULL, " ");
+
+//        arg_list[increment] = strdup(tmp);
+//        increment ++;
+//        tmp = strtok(NULL," ");
     }
     arg_list[increment] = NULL;
 }
@@ -122,7 +144,7 @@ void executeCmd(char *arg_list[])
     }
 }
 
-void freeTokens(char *arg_list[], char *p)
+void freeTokens(char *arg_list[], char *c)
 {
     int increment=0;
     while (arg_list[increment] != NULL)
@@ -130,5 +152,5 @@ void freeTokens(char *arg_list[], char *p)
         free(arg_list[increment]);
         increment ++;
     }
-    free(p);
+    free(c);
 }
