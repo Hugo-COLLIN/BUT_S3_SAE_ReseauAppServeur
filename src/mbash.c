@@ -25,8 +25,33 @@ void identifyTokens(char *arg_list[], char *c, int count);
 void executeCmd();
 int nbArguments();
 void freeTokens(char *arg_list[], char *c);
+void execute(char *arg_list[]);
+int cdF(char *args[]);
+int helpF(char *args[]);
+int exitF(char *args[]);
 
+/*
+  List of builtin commands
+ */
+char *inbuiltStr[] = {
+  "cd",
+  "help",
+  "exit"
+};
 
+int (*inbuiltF[]) (char **) = {
+  &cdF,
+  &helpF,
+  &exitF
+};
+
+int inbuiltLength() {
+  return sizeof(inbuiltStr) / sizeof(char *);
+}
+
+/**
+ * Main function
+ */
 int main(int argc, char** argv) {
     run();
     return 0;
@@ -38,7 +63,7 @@ void run()
     welcome();
 
     while (1) {
-        prompt();
+        interpreter();
     }
 }
 
@@ -52,35 +77,42 @@ void welcome()
     printf("-----------------\n");
 }
 
-void prompt() {
-    capture();
-    interpreter();
+void execute(char *arg_list[])
+{
+  if (arg_list[0] == NULL) {
+    // An empty command was entered.
+    return;
+  }
+
+  for (int i = 0; i < inbuiltLength(); i++) {
+    if (strcmp(arg_list[0], inbuiltStr[i]) == 0) {
+      (*inbuiltF[i])(arg_list);
+      return;
+    }
+  }
+  executeCmd(arg_list);
 }
 
-void capture()
-{
-    printf("\nmbash-%i> ", getpid());
-    fgets(cmd, MAXLI, stdin);
-    cmd[strlen(cmd) - 1] = '\0';
-}
+//-----------------
 
 void interpreter()
 {
-    checkExit();
+    capture();
 
     int count = nbArguments();
     char *arg_list[count+2]; //array of arguments
     char *c = strdup(cmd); //duplicates cmd string
 
     identifyTokens(arg_list, c, count);
-    executeCmd(arg_list);
+    execute(arg_list);
     freeTokens(arg_list, c);
 }
 
-void checkExit() {
-    if (strcmp(cmd, "exit") == 0) {
-        exit(EXIT_SUCCESS);
-    }
+void capture()
+{
+    printf("\nmBash-%i> ", getpid());
+    fgets(cmd, MAXLI, stdin);
+    cmd[strlen(cmd) - 1] = '\0';
 }
 
 int nbArguments()
@@ -121,10 +153,6 @@ void identifyTokens(char *arg_list[], char *c, int count)
             globfree(&g);
         }
         tmp = strtok(NULL, " ");
-
-//        arg_list[increment] = strdup(tmp);
-//        increment ++;
-//        tmp = strtok(NULL," ");
     }
     arg_list[increment] = NULL;
 }
@@ -153,4 +181,39 @@ void freeTokens(char *arg_list[], char *c)
         increment ++;
     }
     free(c);
+}
+
+
+/*
+  Builtin functions implementation.
+*/
+int cdF(char *args[])
+{
+  if (args[1] == NULL) {
+    fprintf(stderr, "Expected argument to \"cd\"\n");
+  } else {
+    if (chdir(args[1]) != 0) {
+      perror("mBash");
+    }
+  }
+  return 1;
+}
+
+int helpF(char *args[])
+{
+  printf("mBash - Hugo COLLIN\n");
+  printf("Type a command, then press enter.\n");
+  printf("The following commands are in-built:\n");
+
+  for (int i = 0; i < inbuiltLength(); i++) {
+    printf("  %s\n", inbuiltStr[i]);
+  }
+
+  printf("Use the man command for information on other programs.\n");
+  return 1;
+}
+
+int exitF(char *args[])
+{
+  exit(EXIT_SUCCESS);
 }
