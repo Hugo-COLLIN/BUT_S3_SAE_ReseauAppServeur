@@ -33,9 +33,9 @@ void executeCmd();
 void nbArguments();
 void freeTokens(char *arg_list[], char *c);
 void execute(char *arg_list[]);
-int cdF(char *args[]);
-int helpF(char *args[]);
-int exitF(char *args[]);
+void cdF(char *args[]);
+void helpF(char *args[]);
+void exitF(char *args[]);
 int inbuiltLength();
 
 /*----------------------------------------
@@ -47,7 +47,7 @@ char *inbuiltStr[] = {
   "exit"
 };
 
-int (*inbuiltF[]) (char **) = {
+void (*inbuiltF[]) (char **) = {
   &cdF,
   &helpF,
   &exitF
@@ -159,22 +159,26 @@ void identifyTokens(char *arg_list[], char *c)
     arg_list[index] = NULL;
 }
 
+/** ----------------------------------------
+Execute the command according to its type
+---------------------------------------- **/
 void execute(char *arg_list[])
 {
-  if (arg_list[0] == NULL) {
-    // An empty command was entered.
-    return;
-  }
+    if (arg_list[0] == NULL) return; //if no command is entered
 
-  for (int i = 0; i < inbuiltLength(); i++) {
-    if (strcmp(arg_list[0], inbuiltStr[i]) == 0) {
-      (*inbuiltF[i])(arg_list);
-      return;
+    //check if the command is an inbuilt command
+    for (int i = 0; i < inbuiltLength(); i++) {
+        if (strcmp(arg_list[0], inbuiltStr[i]) == 0) {
+            (*inbuiltF[i])(arg_list);
+            return;
+        }
     }
-  }
-  executeCmd(arg_list);
+    executeCmd(arg_list); //if not, method that execute the system command
 }
 
+/** ----------------------------------------
+    Execute the system-integrated commands
+---------------------------------------- **/
 void executeCmd(char *arg_list[])
 {
     pid_t process = fork();
@@ -186,21 +190,16 @@ void executeCmd(char *arg_list[])
     }
     else //child process
     {
-        char *test = "&";
-        printf("%d\n", nbArgs);
-        for (int loop = 0 ; loop < nbArgs + 1 ; ++ loop)
-        {
-            printf("%s\t", arg_list[loop]);
-        }
-
         if ( nbArgs > 0 && strcmp(arg_list[nbArgs], "&") == 0 )
-            sleep(0.5);
+            sleep(0.5); //avoid printing the prompt before the child process
         else
-            wait(&process);
-
+            wait(&process); //wait for the child process to finish
     }
 }
 
+/** ----------------------------------------
+        Free the memory
+---------------------------------------- **/
 void freeTokens(char *arg_list[], char *c)
 {
     nbArgs = 0;
@@ -214,14 +213,21 @@ void freeTokens(char *arg_list[], char *c)
 }
 
 
-/*
+/*----------------------------------------
   Inbuilt functions implementation.
-*/
+----------------------------------------*/
+
+/** ----------------------------------------
+    Return the number of inbuilt commands
+---------------------------------------- **/
 int inbuiltLength() {
   return sizeof(inbuiltStr) / sizeof(char *);
 }
 
-int cdF(char *args[])
+/** ----------------------------------------
+    Change directory implementation
+---------------------------------------- **/
+void cdF(char *args[])
 {
   if (args[1] == NULL) {
     fprintf(stderr, "Expected argument to \"cd\"\n");
@@ -230,10 +236,12 @@ int cdF(char *args[])
       perror("mBash");
     }
   }
-  return 1;
 }
 
-int helpF(char *args[])
+/** ----------------------------------------
+    Help implementation
+---------------------------------------- **/
+void helpF(char *args[])
 {
   printf("mBash - Hugo COLLIN\n");
   printf("Type a command, then press enter.\n");
@@ -244,10 +252,12 @@ int helpF(char *args[])
   }
 
   printf("Use the man command for information on other programs.\n");
-  return 1;
 }
 
-int exitF(char *args[])
+/** ----------------------------------------
+    Exit implementation
+---------------------------------------- **/
+void exitF(char *args[])
 {
   exit(EXIT_SUCCESS);
 }
