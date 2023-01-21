@@ -80,7 +80,7 @@ void welcome()
 {
     printf("\n-----------------\n");
     printf("Welcome to mBash!\n");
-    printf("Hugo COLLIN - 16/01/2023\n\n");
+    printf("Hugo COLLIN - 21/01/2023\n\n");
     printf("Type 'exit' to exit mBash.\n");
     printf("-----------------\n");
 }
@@ -243,15 +243,15 @@ void cdF(char *args[])
 ---------------------------------------- **/
 void helpF(char *args[])
 {
-  printf("mBash - Hugo COLLIN\n");
+  printf("mBash - Hugo COLLIN\n\n");
   printf("Type a command, then press enter.\n");
-  printf("The following commands are in-built:\n");
+  printf("The following are in-built commands:\n");
 
   for (int i = 0; i < inbuiltLength(); i++) {
     printf("  %s\n", inbuiltStr[i]);
   }
 
-  printf("Use the man command for information on other programs.\n");
+  printf("Use the man command for information on other commands.\n");
 }
 
 /** ----------------------------------------
